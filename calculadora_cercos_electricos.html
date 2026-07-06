@@ -1,0 +1,309 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplyparts Venezuela - Cálculo de Materiales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul-supply: #0a369d;
+            --amarillo-supply: #fcc000;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .card { transition: all 0.2s ease-in-out; }
+        .card:hover { transform: translateY(-2px); }
+        .bg-azul-supply { background-color: var(--azul-supply); }
+        .text-azul-supply { color: var(--azul-supply); }
+        .bg-amarillo-supply { background-color: var(--amarillo-supply); }
+        
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <div class="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
+        <!-- Header -->
+        <header class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-amarillo-supply p-3 rounded-2xl shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-[900] tracking-tight text-slate-800 uppercase leading-tight">
+                        Cálculo <span class="text-azul-supply">Supplyparts</span>
+                    </h1>
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Ingeniería en Cercos Eléctricos</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <!-- Selector de Líneas de Alambre -->
+                <div class="bg-slate-50 border border-slate-100 p-2 rounded-2xl flex items-center gap-3 shadow-inner">
+                    <span class="text-[10px] font-black text-slate-500 uppercase ml-2">Líneas de Alambre</span>
+                    <div class="flex items-center bg-white border border-slate-200 rounded-xl p-1">
+                        <button onclick="ajustarLineas(-1)" class="w-8 h-8 flex items-center justify-center text-azul-supply hover:bg-slate-50 rounded-lg font-bold">-</button>
+                        <input type="number" id="inputLineas" value="6" min="4" max="20" oninput="validarYCalcular(this.value)" class="w-10 text-center font-black text-azul-supply outline-none">
+                        <button onclick="ajustarLineas(1)" class="w-8 h-8 flex items-center justify-center text-azul-supply hover:bg-slate-50 rounded-lg font-bold">+</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid lg:grid-cols-12 gap-6">
+            <!-- Columna Izquierda -->
+            <div class="lg:col-span-5 space-y-4">
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xs font-black text-slate-500 uppercase tracking-widest">📏 Configuración de Paredes</h2>
+                        <button onclick="agregarTramo()" class="bg-amarillo-supply text-slate-900 px-4 py-2 rounded-xl hover:opacity-90 transition-all shadow-sm font-black text-[10px] uppercase">
+                            + Añadir Pared
+                        </button>
+                    </div>
+                    <div id="listaTramos" class="space-y-3"></div>
+                </div>
+
+                <div class="bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex gap-4">
+                    <div class="bg-white p-3 h-fit rounded-2xl text-azul-supply shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div class="text-[11px] text-slate-700">
+                        <h4 class="font-black uppercase mb-1 text-azul-supply">Lógica Automatizada</h4>
+                        <ul class="list-disc ml-3 space-y-1 opacity-90 font-medium">
+                            <li><strong>Refuerzo</strong>: +2 tubos si la pared supera los 18m.</li>
+                            <li><strong>Pasantes</strong>: 1 cada 6m (si la pared > 6m).</li>
+                            <li><strong>Avisos</strong>: 1 por pared + adicionales cada 20m.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha -->
+            <div class="lg:col-span-7">
+                <div class="bg-azul-supply p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden h-full border border-white/5">
+                    <div class="relative z-10 space-y-6">
+                        <div class="flex justify-between items-start border-b border-white/10 pb-6">
+                            <div>
+                                <h2 class="text-amarillo-supply font-black uppercase tracking-[0.2em] text-xs">Resultados</h2>
+                                <p id="estadoPerimetro" class="text-blue-100 text-[10px] font-bold uppercase mt-1"></p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-black text-blue-300 uppercase">Metraje Total</p>
+                                <p id="totalPerimetro" class="text-2xl font-black">0m</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/10">
+                                <p class="text-[10px] font-black uppercase text-blue-200 mb-2">Tubos Esquineros (Tensión)</p>
+                                <p id="resTubosEsquineros" class="text-3xl font-black text-white">0</p>
+                                <p id="notaEsquineros" class="text-[9px] font-bold text-amarillo-supply mt-1 uppercase"></p>
+                            </div>
+
+                            <div class="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/10">
+                                <p class="text-[10px] font-black uppercase text-blue-200 mb-2">Tubos Pasantes</p>
+                                <p id="resTubosPasantes" class="text-3xl font-black text-white">0</p>
+                                <p class="text-[9px] font-bold opacity-60 mt-1 uppercase">1 cada 6m</p>
+                            </div>
+
+                            <div class="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/10">
+                                <p class="text-[10px] font-black uppercase text-blue-200 mb-2">Aisladores de Esquina</p>
+                                <p id="subAisladores" class="text-2xl font-black text-white">0</p>
+                                <p class="text-[9px] font-bold opacity-60 mt-1 uppercase">Total unidades</p>
+                            </div>
+
+                            <div class="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/10">
+                                <p class="text-[10px] font-black uppercase text-blue-200 mb-2">Ganchos Tensores</p>
+                                <p id="subGanchos" class="text-2xl font-black text-white">0</p>
+                                <p class="text-[9px] font-bold opacity-60 mt-1 uppercase">Total unidades</p>
+                            </div>
+
+                            <div class="bg-amber-500/20 backdrop-blur-md p-5 rounded-3xl border border-amber-500/30 md:col-span-2">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase text-amber-200 mb-1">Letreros de Advertencia</p>
+                                        <p id="resAvisos" class="text-3xl font-black text-white">0</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-[9px] font-black text-amber-300 uppercase leading-tight">Norma COVENIN / Industrial</p>
+                                        <p class="text-[9px] font-bold opacity-60 text-white uppercase mt-1">1 por pared + c/20m</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/10 md:col-span-2">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase text-blue-200">Alambre Aluminizado</p>
+                                        <p id="totalAlambre" class="text-2xl font-black text-white">0m</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p id="totalRollos" class="text-xl font-black text-amarillo-supply">0 Rollos</p>
+                                        <p class="text-[9px] font-bold opacity-60 uppercase">Rollos de 300m</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tramos = [
+            { id: 1, nombre: 'Pared 1', longitud: 0 }
+        ];
+        let numLineas = 6;
+
+        function ajustarLineas(delta) {
+            const input = document.getElementById('inputLineas');
+            let val = parseInt(input.value) + delta;
+            if (val < 4) val = 4;
+            input.value = val;
+            validarYCalcular(val);
+        }
+
+        function validarYCalcular(val) {
+            numLineas = parseInt(val) || 4;
+            calcular();
+        }
+
+        function renderTramos() {
+            const container = document.getElementById('listaTramos');
+            container.innerHTML = '';
+            tramos.forEach(t => {
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 card";
+                div.innerHTML = `
+                    <div class="flex-1">
+                        <input type="text" onchange="updateNombre(${t.id}, this.value)" value="${t.nombre}" class="text-[10px] font-black text-azul-supply uppercase bg-transparent outline-none w-full mb-1 opacity-70">
+                        <div class="flex items-center gap-2">
+                            <input type="number" oninput="updateLongitud(${t.id}, this.value)" value="${t.longitud}" class="text-2xl font-black text-slate-800 bg-transparent outline-none w-24">
+                            <span class="text-xs font-bold text-slate-400">m</span>
+                        </div>
+                    </div>
+                    <button onclick="eliminarTramo(${t.id})" class="text-slate-300 hover:text-rose-500 transition-colors ${tramos.length === 1 ? 'hidden' : ''}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function agregarTramo() {
+            tramos.push({ id: Date.now(), nombre: `Pared ${tramos.length + 1}`, longitud: 0 });
+            renderTramos();
+            calcular();
+        }
+
+        function eliminarTramo(id) {
+            if (tramos.length > 1) {
+                tramos = tramos.filter(t => t.id !== id);
+                renderTramos();
+                calcular();
+            }
+        }
+
+        function updateNombre(id, val) {
+            const t = tramos.find(x => x.id === id);
+            if (t) t.nombre = val;
+        }
+
+        function updateLongitud(id, val) {
+            const t = tramos.find(x => x.id === id);
+            if (t) t.longitud = parseFloat(val) || 0;
+            calcular();
+        }
+
+        function calcular() {
+            const nParedes = tramos.length;
+            
+            let totalPerimetro = 0;
+            let totalPasantes = 0;
+            let totalRefuerzosTension = 0;
+            let totalAvisos = 0;
+
+            // Verificar si todas las longitudes son cero
+            const todasCero = tramos.every(t => t.longitud === 0);
+            
+            if (todasCero) {
+                // Si todas son cero, mostrar todos los resultados en cero
+                document.getElementById('estadoPerimetro').innerText = `Configuración: ${nParedes} Paredes`;
+                document.getElementById('totalPerimetro').innerText = `0m`;
+                document.getElementById('resTubosEsquineros').innerText = '0';
+                document.getElementById('resTubosPasantes').innerText = '0';
+                document.getElementById('subAisladores').innerText = '0';
+                document.getElementById('subGanchos').innerText = '0';
+                document.getElementById('resAvisos').innerText = '0 Unid.';
+                document.getElementById('totalAlambre').innerText = '0m';
+                document.getElementById('totalRollos').innerText = '0 Rollos';
+                document.getElementById('notaEsquineros').innerText = '';
+                return;
+            }
+
+            // Nuevo criterio: tubos esquineros base según cantidad de paredes
+            let tubosEsquinerosBase = 0;
+            switch(nParedes) {
+                case 1: tubosEsquinerosBase = 2; break;
+                case 2: tubosEsquinerosBase = 4; break;
+                case 3: tubosEsquinerosBase = 6; break;
+                case 4: tubosEsquinerosBase = 8; break;
+                default: tubosEsquinerosBase = nParedes + 1; // fórmula original para más de 4 paredes
+            }
+
+            tramos.forEach((t) => {
+                const l = t.longitud;
+                if (l <= 0) return;
+                totalPerimetro += l;
+
+                // Refuerzos de tensión: +2 tubos cada 18m
+                let numRefuerzos = Math.floor(l / 18); 
+                totalRefuerzosTension += (numRefuerzos * 2);
+
+                // Tubos pasantes: 1 cada 6m intermedios
+                if (l > 6) {
+                    let pasantesEnTramo = Math.floor((l - 0.1) / 6);
+                    totalPasantes += pasantesEnTramo;
+                }
+
+                // Avisos: 1 por pared + 1 cada 20m adicionales
+                let avisosPorTramo = 1 + Math.floor((l - 0.1) / 20);
+                totalAvisos += avisosPorTramo;
+            });
+
+            const totalEsquinerosFinal = tubosEsquinerosBase + totalRefuerzosTension;
+            const totalAccesorios = totalEsquinerosFinal * numLineas;
+            const alambreMetros = totalPerimetro * numLineas * 1.05; 
+
+            // Update UI
+            document.getElementById('estadoPerimetro').innerText = `Configuración: ${nParedes} Paredes`;
+            document.getElementById('totalPerimetro').innerText = `${totalPerimetro.toFixed(1)}m`;
+            document.getElementById('resTubosEsquineros').innerText = totalEsquinerosFinal;
+            document.getElementById('resTubosPasantes').innerText = totalPasantes;
+            document.getElementById('subAisladores').innerText = totalAccesorios;
+            document.getElementById('subGanchos').innerText = totalAccesorios;
+            document.getElementById('resAvisos').innerText = `${totalAvisos} Unid.`;
+            document.getElementById('totalAlambre').innerText = `${Math.round(alambreMetros)}m`;
+            document.getElementById('totalRollos').innerText = `${Math.ceil(alambreMetros/300)} Rollos`;
+            
+            // Nota explicativa
+            let notaText = '';
+            if (nParedes <= 4) {
+                notaText = `${tubosEsquinerosBase} tubos base para ${nParedes} paredes`;
+            } else {
+                notaText = `${nParedes} Paredes + 1 Poste (fórmula general)`;
+            }
+            if (totalRefuerzosTension > 0) {
+                notaText += ` + ${totalRefuerzosTension} refuerzos`;
+            }
+            document.getElementById('notaEsquineros').innerText = notaText;
+        }
+
+        renderTramos();
+        calcular();
+    </script>
+</body>
+</html>
